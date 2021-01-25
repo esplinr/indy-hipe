@@ -63,7 +63,7 @@ Some work is required prior to removing the token from the networks:
 
 ### Sovrin BuilderNet
 Sovrin MainNet has the token plugin installed and a token ledger initialized, but has no token transactions. The removal process would proceed as follows:
-1. Update the auth_rules to not reference fees as a method of ledger write authorization.
+1. Update the auth_rules to not reference fees as a method of ledger write authorization. (why do we need this? fees will remain in history anyway. after the update they will be ignored.)
 2. Upgrade the network to a version of Indy that supports frozen ledgers and default fee handlers. (This can probably be a rolling upgrade with no downtime.)
 3. Send the LEDGERS_FREEZE transaction to freeze the token ledger.
 4. Upgrade the network to a version of the Sovrin package that removes the token plugin.
@@ -75,7 +75,7 @@ The last two steps could be combined, but are probably safer to perform independ
 Sovrin StagingNet is configured the same as Sovrin BuilderNet, but has a more extensive token history. The steps to remove the token plugin would be the same.
 
 ### Sovrin MainNet
-Upgrading the Sovrin MainNet is easier because even though it has the token plugin installed and a token ledger initialized, it has no token transactions. The removal process follows the same instructions as for BuilderNet, but it only requires a version of Indy that supports frozen ledgers, it does not require updating the auth_rules, and the migration script does not need to run.
+Upgrading the Sovrin MainNet is easier because even though it has the token plugin installed and a token ledger initialized, it has no token transactions. The removal process follows the same instructions as for BuilderNet, but it only requires a version of Indy that supports frozen ledgers, it does not require updating the auth_rules (the same as line 66), and the migration script does not need to run (it does because most probably we wan to drop the old ledger).
 
 
 ## Drawbacks
@@ -101,13 +101,13 @@ We can eliminate a token plugin by moving the token transactions to Indy as depr
 
 ### Truncate the transaction log that includes token transactions
 
-We could roll the history of the ledger into a new genesis transaction that represents the current state without any token transactions. Though this is possible, it would require significant development and testing to ensure that we captured the state completely. It would also require a complicated roll out for everyone to adopt the new genesis transaction.
+We could roll the history of the ledger into a new genesis transaction that represents the current state without any token transactions. Though this is possible, it would require significant development and testing to ensure that we captured the state completely. It would also require a complicated roll out for everyone (not sure that the genegis will be changed).
 
 ### Resetting StagingNet and BuilderNet
 
-Removing the token from StagingNet and BuilderNet is complicated by the history of token transactions. The cleanest way to deal with that history would be to reset the networks to an empty state. BuilderNet was reset in June of 2020. StagingNet is considered a non-production network and it is expected that it would be regularly reset. But StagingNet is widely used and a reset would cause a significant disruption as developers would have to redeploy their demo credentials. For this reason, we concluded that we had to find a way to address historical token transactions without a network reset.
+Removing the token from StagingNet and BuilderNet is complicated by the history of transactions. Despite they don't contain tokens transaction, they contain fees related transactions. The cleanest way to deal with that history would be to reset the networks to an empty state. BuilderNet was reset in June of 2020. StagingNet is considered a non-production network and it is expected that it would be regularly reset. But StagingNet is widely used and a reset would cause a significant disruption as developers would have to redeploy their demo credentials. For this reason, we concluded that we had to find a way to address historical token transactions without a network reset.
 
-3. Rewriting history on StagingNet and BuilderNet
+###  Rewriting history on StagingNet and BuilderNet
 
 Another way to remove the historical token transactions on StagingNet and BuilderNet would be to rewrite the history of those networks. This is something we have done before in our development environments, and it can be done safely without too much work. But there is a concern that tampering with history could erode confidence in the reliability of Sovrin if changing the history on the test networks is seen as setting a precedence for how we would deal with MainNet. Introducing the concept of a default fee handler seems a more appropriate solution.
 
